@@ -16,9 +16,9 @@ With all these resources in place, we're ready to start deploying our applicatio
 
 |                                                                                                                            | **CDN**             | **Compute**                     | **Custom Server** | **Scale down to zero** |
 | -------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------------------------------- | ----------------- | ---------------------- |
-| **Completely Static**<br/>AWS CloudFront / AWS S3<br/>Google Cloud Storage<br/>GitHub Pages                                | ✅                  | ❌ Client side or external APIs | ❌                | ✅                     |
-| **Platform-as-a-Service**<br/>Vercel<br/>Netlify<br/>AWS Amplify<br/>Serverless Next.js                                    | ✅ Global edge CDN  | ✅ Serverless Functions         | ❌                | ✅                     |
-| **Container-as-a-Service or Kubernetes**<br/>Azure Web App Service<br/>AWS Fargate<br/>Google Kubernetes Engine<br/>Heroku | 🚧 Roll it yourself | ✅ Node.js server               | ✅                | ❌                     |
+| **Completely Static**<br/>AWS CloudFront / AWS S3<br/>Google Cloud Storage<br/>GitHub Pages                                | ✅ By default for most providers                  | ❌ Client side or external APIs | ❌                | ✅                     |
+| **Platform-as-a-Service**<br/>Vercel<br/>Netlify<br/>AWS Amplify<br/>Serverless Next.js                                    | ✅ Global edge CDN  | ✅ Serverless Functions         | ❌                | ✅                     |
+| **Container-as-a-Service or Kubernetes**<br/>Azure Web App Service<br/>AWS Fargate<br/>Google Kubernetes Engine<br/>Heroku | 🚧 Roll it yourself | ✅ Node.js server               | ✅                | ❌                     |
 
 ## Completely Static
 
