@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namePrefix: replicated-
+
+resources:
+  - ../../bases/deployment/
+  - ./ingress.yaml
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: nextjs-website
+      spec:
+        replicas: 5
+        selector:
+          matchLabels:
+            app: replicated-nextjs-website
+        template:
+          metadata:
+            labels:
+              app: replicated-nextjs-website
+  - patch: |-
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: nextjs-website-service
+      spec:
+        selector:
+          app: replicated-nextjs-website
+      

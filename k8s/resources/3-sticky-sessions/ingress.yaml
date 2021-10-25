@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nextjs-website-ingress
+  annotations:
+    # use the shared ingress-nginx
+    kubernetes.io/ingress.class: "nginx"
+    # Enable session affinity, such that all requests from one
+    # user are routed to the same pod.
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+spec:
+  rules:
+  - host: "sticky-sessions.replicated.127.0.0.1.nip.io"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service: 
+            name: replicated-nextjs-website-service
+            port: 
+              number: 80

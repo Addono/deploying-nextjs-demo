@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextjs-website
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: nextjs-website
+  template:
+    metadata:
+      labels:
+        app: nextjs-website
+    spec:
+      containers:
+      - name: nextjs-website
+        image: ghcr.io/addono/deploying-nextjs-demo:main
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextjs-website-service
+spec:
+  selector:
+    app: nextjs-website
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 3000
+  type: NodePort
