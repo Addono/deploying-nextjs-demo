@@ -30,9 +30,8 @@ Next.js supports creating static builds out of the box. In this mode, you cannot
 yarn next build && yarn next export
 ```
 
-<spoiler>
+<details>
     <summary><b>Did it work?</b></summary>
-    <details>
         <p>
         No, when running this command we will get the following error:<br/> 
         <code>
@@ -43,7 +42,6 @@ yarn next build && yarn next export
             One of our pages uses Server Side Rendering. Something which isn't supported in static exports. Let's rename <code>./src/ssr.tsx</code> to <code>./src/ssr.tsx.bak</code> and try again.
         </p>
     </details>
-</spoiler>
 
 ### The Result
 
