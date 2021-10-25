@@ -14,11 +14,11 @@ This repository contains the talking notes and demo material for some hands-on e
 
 With all these resources in place, we're ready to start deploying our application to various vendors. The table below outlines various different deployment models we can use:
 
-|                                                                                                                            | **CDN**             | **Compute**                     | **Custom Server** | **Scale down to zero** |
-| -------------------------------------------------------------------------------------------------------------------------- | ------------------- | ------------------------------- | ----------------- | ---------------------- |
-| **Completely Static**<br/>AWS CloudFront / AWS S3<br/>Google Cloud Storage<br/>GitHub Pages                                | ✅ By default for most providers                  | ❌ Client side or external APIs | ❌                | ✅                     |
-| **Platform-as-a-Service**<br/>Vercel<br/>Netlify<br/>AWS Amplify<br/>Serverless Next.js                                    | ✅ Global edge CDN  | ✅ Serverless Functions         | ❌                | ✅                     |
-| **Container-as-a-Service or Kubernetes**<br/>Azure Web App Service<br/>AWS Fargate<br/>Google Kubernetes Engine<br/>Heroku | 🚧 Roll it yourself | ✅ Node.js server               | ✅                | ❌                     |
+|                                                                                                                            | **CDN**                          | **Compute**                     | **Custom Server** | **Scale down to zero** |
+| -------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------- | ----------------- | ---------------------- |
+| **Completely Static**<br/>AWS CloudFront / AWS S3<br/>Google Cloud Storage<br/>GitHub Pages                                | ✅ By default for most providers | ❌ Client side or external APIs | ❌                | ✅                     |
+| **Platform-as-a-Service**<br/>Vercel<br/>Netlify<br/>AWS Amplify<br/>Serverless Next.js                                    | ✅ Global edge CDN               | ✅ Serverless Functions         | ❌                | ✅                     |
+| **Container-as-a-Service or Kubernetes**<br/>Azure Web App Service<br/>AWS Fargate<br/>Google Kubernetes Engine<br/>Heroku | 🚧 Roll it yourself              | ✅ Node.js server               | ✅                | ❌                     |
 
 ## Completely Static
 
@@ -34,9 +34,7 @@ yarn next build && yarn next export
     <summary><b>Did it work?</b></summary>
         <p>
         No, when running this command we will get the following error:<br/> 
-        <code>
-            Error: Error for page /ssr: pages with `getServerSideProps` can not be exported. See more info here: https://nextjs.org/docs/messages/gssp-export
-        </code>
+        <pre><code>Error: Error for page /ssr: pages with `getServerSideProps` can not be exported. See more info here: https://nextjs.org/docs/messages/gssp-export</code></pre>
         </p>
         <p>
             One of our pages uses Server Side Rendering. Something which isn't supported in static exports. Let's rename <code>./src/ssr.tsx</code> to <code>./src/ssr.tsx.bak</code> and try again.
@@ -51,7 +49,7 @@ Now that we have our static build, we can go on and see what we've got. The stat
 npx serve ./out/
 ```
 
-When we now navigate to [`http://localhost:5000`](http://localhost:5000) we will see our application, and it's blazing fast 🚀. 
+When we now navigate to [`http://localhost:5000`](http://localhost:5000) we will see our application, and it's blazing fast 🚀.
 
 But if you click around you will notice that some things aren't working. All our server-side logic is ripped out, so our client-side rendered page errors, because it cannot find the API. The entire Server Side Rendered page isn't there (because we had to remove it), and our Incremental Static Regeneration-page isn't regenerating 😫 .
 
@@ -101,9 +99,9 @@ Let's open up the webpage where Vercel deployed to. In case you aren't following
 
 If you open up the network tab of your browser's developer tools you might see some interesting things. Especially keep an eye on the request duration.
 
- 1. The first request to a page or API endpoint can be significantly slower, due to the serverless function experiencing a cold-start.
- 2. All resources requiring server-side computation take at least 150ms. Which isn't too surprising, given that the serverless function's are provisioned to an AWS region in the East of the US. Much of this latency is merely the time it takes from my request to go from Europe to the US and back. Deploying to multiple regions is only available on the Enterprice tier.
- 3. Static resources, such as the home page, the body of the Client Side Rendered page and the Incremental Static Generation page load very fast (usually under 50ms). 🏎 
+1.  The first request to a page or API endpoint can be significantly slower, due to the serverless function experiencing a cold-start.
+2.  All resources requiring server-side computation take at least 150ms. Which isn't too surprising, given that the serverless function's are provisioned to an AWS region in the East of the US. Much of this latency is merely the time it takes from my request to go from Europe to the US and back. Deploying to multiple regions is only available on the Enterprice tier.
+3.  Static resources, such as the home page, the body of the Client Side Rendered page and the Incremental Static Generation page load very fast (usually under 50ms). 🏎
 
 Now that we have done a full deployment, we can see where platforms like Vercel shine and where it lacks:
 
