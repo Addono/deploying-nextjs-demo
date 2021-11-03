@@ -21,7 +21,7 @@ With all these resources in place, we're ready to start deploying our applicatio
 | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ------------------------------- | ----------------- | ---------------------- |
 | **Completely Static**<br/>AWS CloudFront / AWS S3<br/>Google Cloud Storage<br/>GitHub Pages                                | ✅ By default for most providers | ❌ Client side or external APIs | ❌                | ✅                     |
 | **Platform-as-a-Service**<br/>Vercel<br/>Netlify<br/>AWS Amplify<br/>Serverless Next.js                                    | ✅ Global edge CDN               | ✅ Serverless Functions         | ❌                | ✅                     |
-| **Container-as-a-Service or Kubernetes**<br/>Azure Web App Service<br/>AWS Fargate<br/>Google Kubernetes Engine<br/>Heroku | 🚧 Roll it yourself              | ✅ Node.js server               | ✅                | ❌                     |
+| **Node.js Server**<br/>Azure Web App Service<br/>AWS Fargate<br/>Google Kubernetes Engine<br/>Heroku | 🚧 Roll it yourself              | ✅ Node.js server               | ✅                | ❌                     |
 
 ## Completely Static
 
@@ -116,9 +116,9 @@ Now that we have done a full deployment, we can see where platforms like Vercel 
 
 ❌ Lack of control of our deployment
 
-## Container-as-a-Service / Kubernetes
+## Node.js Server
 
-Lastsly we will dive into deploying our Next.js application as a container. Containerizing a Next.js application isn't particularly difficult. However, as we will see there are some funny things happening when we horizontally scale our application.
+Lastsly we will dive into deploying our Next.js application as a Node.js server wrapped in a container. Containerizing a Next.js application isn't particularly difficult. However, as we will see there are some funny things happening when we horizontally scale our application.
 
 ### Pre-requisites
 
