@@ -1,6 +1,9 @@
 ### [To The Cloud and Beyond](https://www.eficode.com/events/to-the-cloud-and-beyond)
 
+[GitHub / Addono / deploying-nextjs-demo](https://github.com/Addono/deploying-nextjs-demo)
+
 # How to deploy Next.js - Learn to do it with various vendors
+
 
 Next.js has quickly become one of the most popular web application frameworks. But the official Next.js documentation does not cover in-depth how to deploy it. In this hands-on demo you will learn how to deploy a Next.js application to various providers, and also their pros and cons.
 
@@ -151,7 +154,6 @@ kustomize build k8s/resources/1-single | kubectl apply -f -
 
 If we now list our ingresses and deployments we will see that we have the following resources:
 
-
 ```
 ❯ kubectl get deploy,ingress
 NAME                                        READY   UP-TO-DATE   AVAILABLE   AGE
@@ -186,7 +188,7 @@ ingress.networking.k8s.io/replicated-nextjs-website-ingress  <none>   replicated
 ingress.networking.k8s.io/single-nextjs-website-ingress      <none>   single.127.0.0.1.nip.io           192.168.57.2   80      1h
 ```
 
-Click a bit through the pages of the webshop and maybe refresh pages once in a while. If you look carefully you will see that some weird things sometimes start to happen: We will start to get served a mix of newer and older pages. 
+Click a bit through the pages of the webshop and maybe refresh pages once in a while. If you look carefully you will see that some weird things sometimes start to happen: We will start to get served a mix of newer and older pages.
 
 There are several caching mechanisms inside Next.js, but none of these are shared between the instances. As a result, every page is cached separately between different instances, which means that we will get served a mix of older and newer pages depending on which instance our traffic is routed to. To users navigating your website this means that refreshing pages leads to flickering between old and new content, ouch.
 
@@ -214,31 +216,31 @@ metadata:
   name: sticky-session-nextjs-website-ingress
 spec:
   rules:
-  - host: sticky-sessions.replicated.127.0.0.1.nip.io
-    http:
-      paths:
-      - backend:
-          service:
-            name: replicated-nextjs-website-service
-            port:
-              number: 80
-        path: /
-        pathType: Prefix
+    - host: sticky-sessions.replicated.127.0.0.1.nip.io
+      http:
+        paths:
+          - backend:
+              service:
+                name: replicated-nextjs-website-service
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
 ```
 
-We re-used the replicated deployment from previous section, but our new ingress uses a different domain for us to use:  [sticky-sessions.replicated.127.0.0.1.nip.io](http://sticky-sessions.replicated.127.0.0.1.nip.io).
+We re-used the replicated deployment from previous section, but our new ingress uses a different domain for us to use: [sticky-sessions.replicated.127.0.0.1.nip.io](http://sticky-sessions.replicated.127.0.0.1.nip.io).
 
 We'll notice that this solved most of our issues. There are still edge-cases where we'll get the behaviour closer to the replicated example. But for the vast majority of our end-users they will have a similar experience of our deployment with only a single container.
 
 ### Other Improvements
 
-Sticky sessions is only the first step in creating a better end-user experience. First and foremost you probably want to look into adding a CDN. You could achieve this by adding a CDN as a caching layer in front of your pods. The files in the `_next/static/` path can easily be cached for a long time, as their filenames are unique. Other pages, like statically generated pages can be cached as well, but require you to handle evicting the cache if a newer version of your app goes live. 
+Sticky sessions is only the first step in creating a better end-user experience. First and foremost you probably want to look into adding a CDN. You could achieve this by adding a CDN as a caching layer in front of your pods. The files in the `_next/static/` path can easily be cached for a long time, as their filenames are unique. Other pages, like statically generated pages can be cached as well, but require you to handle evicting the cache if a newer version of your app goes live.
 
 Alternatively to putting the CDN in-between your application and the internet is to push all static files to your CDN and ensure that the traffic is routed to your CDN. You can use the [`assetPrefix`](https://nextjs.org/docs/api-reference/next.config.js/cdn-support-with-asset-prefix) configuration option in `next.config.js` to tell Next.js to expect to serve your static assets from a different domain.
 
 If inconsistencies are completely unacceptable, then you might want to avoid some of the features from Nextjs which use caching. Completely client or server-side rendered pages bypass the caching mechanism and ensure a fresh render on each visit. But this will come at the cost of slightly lower performance.
 
-On the application side you can also consider rehydrating after page-load. Such that after the initial page load is done another request is made to the backend to update (parts of) the data. For example, a webshop can use incremental static generation for its shop pages, where the page will be cached including most of the body of the page. But part of the page data, such as price and availability, is then hidden behind a suspense and freshly retrieved by the browser. 
+On the application side you can also consider rehydrating after page-load. Such that after the initial page load is done another request is made to the backend to update (parts of) the data. For example, a webshop can use incremental static generation for its shop pages, where the page will be cached including most of the body of the page. But part of the page data, such as price and availability, is then hidden behind a suspense and freshly retrieved by the browser.
 
 ---
 
