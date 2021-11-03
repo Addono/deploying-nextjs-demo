@@ -40,7 +40,7 @@ yarn next build && yarn next export
         <pre><code>Error: Error for page /ssr: pages with `getServerSideProps` can not be exported. See more info here: https://nextjs.org/docs/messages/gssp-export</code></pre>
         </p>
         <p>
-            One of our pages uses Server Side Rendering. Something which isn't supported in static exports. Let's rename <code>./src/ssr.tsx</code> to <code>./src/ssr.tsx.bak</code> and try again.
+            One of our pages uses Server Side Rendering. Something which isn't supported in static exports. Let's rename <code>./src/pages/ssr.tsx</code> to <code>./src/pages/ssr.tsx.bak</code> and try again.
         </p>
     </details>
 
