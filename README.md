@@ -33,7 +33,7 @@ yarn next build && yarn next export
 <details>
     <summary><b>Did it work?</b></summary>
         <p>
-        No, when running this command we will get the following error:<br/> 
+        Sadly no, when running this command we will get the following error:<br/> 
         <pre><code>Error: Error for page /ssr: pages with `getServerSideProps` can not be exported. See more info here: https://nextjs.org/docs/messages/gssp-export</code></pre>
         </p>
         <p>
@@ -112,6 +112,133 @@ Now that we have done a full deployment, we can see where platforms like Vercel 
 ✅ Very quick builds and deploys
 
 ❌ Lack of control of our deployment
+
+## Container-as-a-Service / Kubernetes
+
+Lastsly we will dive into deploying our Next.js application as a container. Containerizing a Next.js application isn't particularly difficult. However, as we will see there are some funny things happening when we horizontally scale our application.
+
+### Pre-requisites
+
+We will be using a local Kubernetes cluster for this guide, provisioned by [Minikube](https://minikube.sigs.k8s.io), head over to their [documentation](https://minikube.sigs.k8s.io/docs/start/) for details on how to set it up. In addition, we will be using [Kubectl](https://kubernetes.io/docs/tasks/tools/) and [Kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/).
+
+Once you have installed all required tools and have a running Kubernetes cluster, we need to install Nginx Ingress.
+
+```bash
+# Enable Nginx Ingress
+minikube addons enable ingress
+
+# Expose the ingress locally
+minikube tunnel
+```
+
+Instructions for other Kubernetes providers can be found in the [Nginx Ingress](https://kubernetes.github.io/ingress-nginx/deploy/#provider-specific-steps) documentation.
+
+### Building the Image
+
+In [`./Dockerfile`](./Dockerfile) you find the build configuration to turn our Next.js application into a container image. It's strongly based on the Dockerfile from the [official documentation], featuring some minor adjustments here and there to make it work for this project as well.
+
+There's nothing too special going on here, we use multiple stages which yield some optimizations in image size. In the end we have a container image with Node and the build artifacts of our Next.js application ready to be deployed. On boot, the container will start the production Next.js server the application came with. One of the main advantages of running Next.js inside a container is that it does support custom webservers, which can be usefull in some situations if you have particular needs.
+
+Feel free to build the image yourself, or alternatively you can use a pre-build image [`ghcr.io/addono/deploying-nextjs-demo:main`](https://github.com/Addono/deploying-nextjs-demo/pkgs/container/deploying-nextjs-demo) to hit the ground running.
+
+### Single Replica Deployment
+
+Let's start with creating our first deployment. This initial deployment will start a single container running inside our Kubernetes cluster. In addition, we will create an Ingress resource such that we can access the webserver running inside the container.
+
+```bash
+kustomize build k8s/resources/1-single | kubectl apply -f -
+```
+
+If we now list our ingresses and deployments we will see that we have the following resources:
+
+
+```
+❯ kubectl get deploy,ingress
+NAME                                        READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/single-nextjs-website       1/1     1            1           36s
+
+NAME                                                         CLASS    HOSTS                         ADDRESS        PORTS   AGE
+ingress.networking.k8s.io/single-nextjs-website-ingress      <none>   single.127.0.0.1.nip.i      192.168.57.2   80      36s
+```
+
+Great, [single.127.0.0.1.nip.io](http://single.127.0.0.1.nip.io) is the domain name we can use to access our environment. Click through it to see our app in action.
+
+### Replicated Deployment
+
+Just having a single node serve all our traffic is maybe fine for smaller deployments, but if our app needs to be deployed at scale, in a high-availability mode or in multiple regions, then we will need to horizontally scale our app.
+
+Apply the following deployment manifests to create another deployment and ingress resource for our app. This time our deployment will be replicated over several containers.
+
+```bash
+kustomize build k8s/resources/2-replicated | kubectl apply -f -
+```
+
+Again, let's start by listing our resources. We will see that we now have a new ingress at [replicated.127.0.0.1.nip.io](http://replicated.127.0.0.1.nip.io) which we can use to access our replicated deployment. The replicated deployment contains five instances of our app. When we now access our app, our traffic will get routed at random to one of the five instances.
+
+```
+❯ kubectl get deploy,ingress
+NAME                                        READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/replicated-nextjs-website   5/5     5            5           1h
+deployment.apps/single-nextjs-website       1/1     1            1           1h
+
+NAME                                                         CLASS    HOSTS                             ADDRESS        PORTS   AGE
+ingress.networking.k8s.io/replicated-nextjs-website-ingress  <none>   replicated.127.0.0.1.nip.io       192.168.57.2   80      1h
+ingress.networking.k8s.io/single-nextjs-website-ingress      <none>   single.127.0.0.1.nip.io           192.168.57.2   80      1h
+```
+
+Click a bit through the pages of the webshop and maybe refresh pages once in a while. If you look carefully you will see that some weird things sometimes start to happen: We will start to get served a mix of newer and older pages. 
+
+There are several caching mechanisms inside Next.js, but none of these are shared between the instances. As a result, every page is cached separately between different instances, which means that we will get served a mix of older and newer pages depending on which instance our traffic is routed to. To users navigating your website this means that refreshing pages leads to flickering between old and new content, ouch.
+
+Whether this is a problem for you depends on your specific application, your requirements and the Next.js features you're using. E.g. if you only use server-side rendered pages, then you won't be using the application cache and you will be unaffected.
+
+### Reducing Inconsistencies with Sticky Sessions
+
+There are several ways on how to improve our end-user experience once cache inconsistencies become an issue. Here we will be looking into using sticky sessions, which will try to route the traffic of one user to the same instance.
+
+Let's create another ingress for our application, this time with session affinity enabled:
+
+```
+kustomize build resources/3-sticky-sessions | kubectl apply -f -
+```
+
+This will create the following resource:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/affinity: cookie
+  name: sticky-session-nextjs-website-ingress
+spec:
+  rules:
+  - host: sticky-sessions.replicated.127.0.0.1.nip.io
+    http:
+      paths:
+      - backend:
+          service:
+            name: replicated-nextjs-website-service
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+```
+
+We re-used the replicated deployment from previous section, but our new ingress uses a different domain for us to use:  [sticky-sessions.replicated.127.0.0.1.nip.io](http://sticky-sessions.replicated.127.0.0.1.nip.io).
+
+We'll notice that this solved most of our issues. There are still edge-cases where we'll get the behaviour closer to the replicated example. But for the vast majority of our end-users they will have a similar experience of our deployment with only a single container.
+
+### Other Improvements
+
+Sticky sessions is only the first step in creating a better end-user experience. First and foremost you probably want to look into adding a CDN. You could achieve this by adding a CDN as a caching layer in front of your pods. The files in the `_next/static/` path can easily be cached for a long time, as their filenames are unique. Other pages, like statically generated pages can be cached as well, but require you to handle evicting the cache if a newer version of your app goes live. 
+
+Alternatively to putting the CDN in-between your application and the internet is to push all static files to your CDN and ensure that the traffic is routed to your CDN. You can use the [`assetPrefix`](https://nextjs.org/docs/api-reference/next.config.js/cdn-support-with-asset-prefix) configuration option in `next.config.js` to tell Next.js to expect to serve your static assets from a different domain.
+
+If inconsistencies are completely unacceptable, then you might want to avoid some of the features from Nextjs which use caching. Completely client or server-side rendered pages bypass the caching mechanism and ensure a fresh render on each visit. But this will come at the cost of slightly lower performance.
+
+On the application side you can also consider rehydrating after page-load. Such that after the initial page load is done another request is made to the backend to update (parts of) the data. For example, a webshop can use incremental static generation for its shop pages, where the page will be cached including most of the body of the page. But part of the page data, such as price and availability, is then hidden behind a suspense and freshly retrieved by the browser. 
 
 ---
 
