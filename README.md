@@ -46,7 +46,7 @@ yarn next build && yarn next export
 
 ### The Result
 
-Now that we have our static build, we can go on and see what we've got. The static export defaults to output to `./out/`, so let's start a local webserver and see how it behaves:
+Now that we have our static build, we can go on and see what we've got. The static export defaults to output to `./out/`, so let's start a local web server and see how it behaves:
 
 ```bash
 npx serve ./out/
@@ -78,7 +78,7 @@ One word of caution: Not all Next.js PaaS providers always support all features 
 
 ### Our First Deployment to Vercel
 
-To create our first deployment to Vercel we need to start by creating an account. Open [vercel.com](https://vercel.com/signup) and follow the signup instructions, their free tier is more than sufficient for this demo.
+To create our first deployment to Vercel we need to start by creating an account. Open [vercel.com](https://vercel.com/signup) and follow the sign-up instructions, their free tier is more than sufficient for this demo.
 
 Now we will use the [Vercel CLI](https://vercel.com/cli) to deploy our source code. First run:
 
@@ -92,7 +92,7 @@ And then kick-off a deployment for our app:
 vercel --prod
 ```
 
-You will see that Vercel will send your source-code to their platform and kick-off a build there. Then once that's done provision your environment and in slighly over a minute we have our deployment all up and running. Very neat.
+You will see that Vercel will send your source-code to their platform and kick-off a build there. Then once that's done provision your environment and in slightly over a minute we have our deployment all up and running. Very neat.
 
 [![asciicast](https://asciinema.org/a/46Wu9EanOYpbYuhHw6NfUYGVW.svg)](https://asciinema.org/a/46Wu9EanOYpbYuhHw6NfUYGVW)
 
@@ -103,7 +103,7 @@ Let's open up the webpage where Vercel deployed to. In case you aren't following
 If you open up the network tab of your browser's developer tools you might see some interesting things. Especially keep an eye on the request duration.
 
 1.  The first request to a page or API endpoint can be significantly slower, due to the serverless function experiencing a cold-start.
-2.  All resources requiring server-side computation take at least 150ms. Which isn't too surprising, given that the serverless function's are provisioned to an AWS region in the East of the US. Much of this latency is merely the time it takes from my request to go from Europe to the US and back. Deploying to multiple regions is only available on the Enterprice tier.
+2.  All resources requiring server-side computation take at least 150ms. Which isn't too surprising, given that the serverless functions are provisioned to an AWS region in the East of the US. Much of this latency is merely the time it takes from my request to go from Europe to the US and back. Deploying to multiple regions is only available on the Enterprice tier.
 3.  Static resources, such as the home page, the body of the Client Side Rendered page and the Incremental Static Generation page load very fast (usually under 50ms). 🏎
 
 Now that we have done a full deployment, we can see where platforms like Vercel shine and where it lacks:
@@ -118,9 +118,9 @@ Now that we have done a full deployment, we can see where platforms like Vercel 
 
 ## Node.js Server
 
-Lastsly we will dive into deploying our Next.js application as a Node.js server wrapped in a container. Containerizing a Next.js application isn't particularly difficult. However, as we will see there are some funny things happening when we horizontally scale our application.
+Lastly we will dive into deploying our Next.js application as a Node.js server wrapped in a container. Containerizing a Next.js application isn't particularly difficult. However, as we will see there are some funny things happening when we horizontally scale our application.
 
-### Pre-requisites
+### Prerequisites
 
 We will be using a local Kubernetes cluster for this guide, provisioned by [Minikube](https://minikube.sigs.k8s.io), head over to their [documentation](https://minikube.sigs.k8s.io/docs/start/) for details on how to set it up. In addition, we will be using [Kubectl](https://kubernetes.io/docs/tasks/tools/) and [Kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/).
 
@@ -146,7 +146,7 @@ Feel free to build the image yourself, or alternatively you can use a pre-build 
 
 ### Single Replica Deployment
 
-Let's start with creating our first deployment. This initial deployment will start a single container running inside our Kubernetes cluster. In addition, we will create an Ingress resource such that we can access the webserver running inside the container.
+Let's start with creating our first deployment. This initial deployment will start a single container running inside our Kubernetes cluster. In addition, we will create an Ingress resource such that we can access the web server running inside the container.
 
 ```bash
 kustomize build k8s/resources/1-single | kubectl apply -f -
@@ -188,7 +188,7 @@ ingress.networking.k8s.io/replicated-nextjs-website-ingress  <none>   replicated
 ingress.networking.k8s.io/single-nextjs-website-ingress      <none>   single.127.0.0.1.nip.io           192.168.57.2   80      1h
 ```
 
-Click a bit through the pages of the webshop and maybe refresh pages once in a while. If you look carefully you will see that some weird things sometimes start to happen: We will start to get served a mix of newer and older pages.
+Click a bit through the pages of the website and maybe refresh pages once in a while. If you look carefully you will see that some weird things sometimes start to happen: We will start to get served a mix of newer and older pages.
 
 There are several caching mechanisms inside Next.js, but none of these are shared between the instances. As a result, every page is cached separately between different instances, which means that we will get served a mix of older and newer pages depending on which instance our traffic is routed to. To users navigating your website this means that refreshing pages leads to flickering between old and new content, ouch.
 
@@ -230,17 +230,17 @@ spec:
 
 We re-used the replicated deployment from previous section, but our new ingress uses a different domain for us to use: [sticky-sessions.replicated.127.0.0.1.nip.io](http://sticky-sessions.replicated.127.0.0.1.nip.io).
 
-We'll notice that this solved most of our issues. There are still edge-cases where we'll get the behaviour closer to the replicated example. But for the vast majority of our end-users they will have a similar experience of our deployment with only a single container.
+We'll notice that this solved most of our issues. There are still edge-cases where we'll get the behavior closer to the replicated example. But for the vast majority of our end-users they will have a similar experience of our deployment with only a single container.
 
 ### Other Improvements
 
-Sticky sessions is only the first step in creating a better end-user experience. First and foremost you probably want to look into adding a CDN. You could achieve this by adding a CDN as a caching layer in front of your pods. The files in the `_next/static/` path can easily be cached for a long time, as their filenames are unique. Other pages, like statically generated pages can be cached as well, but require you to handle evicting the cache if a newer version of your app goes live.
+Sticky sessions are only the first step in creating a better end-user experience. First and foremost you probably want to look into adding a CDN. You could achieve this by adding a CDN as a caching layer in front of your pods. The files in the `_next/static/` path can easily be cached for a long time, as their filenames are unique. Other pages, like statically generated pages can be cached as well, but require you to handle evicting the cache if a newer version of your app goes live.
 
 Alternatively to putting the CDN in-between your application and the internet is to push all static files to your CDN and ensure that the traffic is routed to your CDN. You can use the [`assetPrefix`](https://nextjs.org/docs/api-reference/next.config.js/cdn-support-with-asset-prefix) configuration option in `next.config.js` to tell Next.js to expect to serve your static assets from a different domain.
 
-If inconsistencies are completely unacceptable, then you might want to avoid some of the features from Nextjs which use caching. Completely client or server-side rendered pages bypass the caching mechanism and ensure a fresh render on each visit. But this will come at the cost of slightly lower performance.
+If inconsistencies are completely unacceptable, then you might want to avoid some features from Next.js which use caching. Completely client or server-side rendered pages bypass the caching mechanism and ensure a fresh render on each visit. But this will come at the cost of slightly lower performance.
 
-On the application side you can also consider rehydrating after page-load. Such that after the initial page load is done another request is made to the backend to update (parts of) the data. For example, a webshop can use incremental static generation for its shop pages, where the page will be cached including most of the body of the page. But part of the page data, such as price and availability, is then hidden behind a suspense and freshly retrieved by the browser.
+On the application side you can also consider rehydrating after page-load. Such that after the initial page load is done another request is made to the backend to update (parts of) the data. For example, a web shop can use incremental static generation for its shop pages, where the page will be cached including most of the body of the page. But part of the page data, such as price and availability, is then hidden behind a suspense and freshly retrieved by the browser.
 
 ---
 
